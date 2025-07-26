@@ -1,2 +1,5 @@
+# The Stockholm Color palette!
+
+
 - Install the requirements, `pip install -r requirements.py`
 - Input the number of colors in `n_colors` in [generate_colors.py](./generate_colors.py) and run it!
