@@ -4,6 +4,7 @@ from itertools import combinations
 from colorsys import hls_to_rgb
 from IPython.display import display, HTML
 
+n_colors = 5
 
 
 def hsl_to_rgb255(h, s, l):
