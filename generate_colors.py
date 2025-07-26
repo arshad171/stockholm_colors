@@ -1,32 +1,47 @@
 import numpy as np
 from scipy.optimize import minimize
 from itertools import combinations
+from colorsys import hls_to_rgb
 from IPython.display import display, HTML
 
-# Example usage
-n_colors = 10
 
-def pastel_distance_objective(flat_rgb, n):
-    """Objective function: negative of minimum pairwise distance."""
-    colors = flat_rgb.reshape((n, 3))
-    min_dist = np.inf
+
+def hsl_to_rgb255(h, s, l):
+    """Convert HSL (degrees, [0-1], [0-1]) to RGB [0-255]"""
+    r, g, b = hls_to_rgb(h / 360.0, l, s)
+    return np.array([r, g, b]) * 255
+
+
+def pastel_distance_objective(hsl_flat, n):
+    hsl = hsl_flat.reshape((n, 3))
+    rgb_colors = np.array([hsl_to_rgb255(*hsl_i) for hsl_i in hsl])
+
+    total_dist = 0
     for i, j in combinations(range(n), 2):
-        dist = np.linalg.norm(colors[i] - colors[j])
-        if dist < min_dist:
-            min_dist = dist
-    return -min_dist
+        total_dist += np.linalg.norm(rgb_colors[i] - rgb_colors[j])
+    return -total_dist  # Negative for minimization
 
 
-def generate_pastel_colors(n, lower_bound=150, upper_bound=255, seed=None):
-    if seed:
+def generate_pastel_colors_hsl(n, seed=None):
+    if seed is not None:
         np.random.seed(seed)
 
-    bounds = [(lower_bound, upper_bound)] * (n * 3)
-    initial_guess = np.random.uniform(lower_bound, upper_bound, size=(n * 3))
+    bounds = []
+    for _ in range(n):
+        bounds.append((0, 360))  # Hue
+        bounds.append((0.2, 0.5))  # Saturation
+        bounds.append((0.75, 1.0))  # Lightness
+
+    initial_guess = []
+    for i in range(n):
+        h = (360 / n) * i
+        s = np.random.uniform(0.2, 0.5)
+        l = np.random.uniform(0.75, 1.0)
+        initial_guess.extend([h, s, l])
 
     result = minimize(
         pastel_distance_objective,
-        initial_guess,
+        np.array(initial_guess),
         args=(n,),
         bounds=bounds,
         method="L-BFGS-B",
@@ -36,8 +51,9 @@ def generate_pastel_colors(n, lower_bound=150, upper_bound=255, seed=None):
     if not result.success:
         raise RuntimeError(f"Optimization failed: {result.message}")
 
-    colors = result.x.reshape((n, 3))
-    return np.clip(np.round(colors), 0, 255).astype(int)
+    hsl_colors = result.x.reshape((n, 3))
+    rgb_colors = np.array([hsl_to_rgb255(*hsl_i) for hsl_i in hsl_colors])
+    return np.clip(np.round(rgb_colors), 0, 255).astype(int)
 
 
 def rgb_to_hex(rgb):
@@ -58,5 +74,5 @@ def display_color_palette(colors):
     display(HTML(html))
 
 
-pastels = generate_pastel_colors(n_colors, seed=42)
+pastels = generate_pastel_colors_hsl(n_colors, seed=42)
 display_color_palette(pastels)
