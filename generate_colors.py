@@ -75,5 +75,14 @@ def display_color_palette(colors):
     display(HTML(html))
 
 
+def display_color_palette_console(colors):
+    for i, rgb in enumerate(colors):
+        r, g, b = rgb
+        hex_color = rgb_to_hex(rgb)
+        # ANSI escape code for true-color background
+        color_block = f"\033[48;2;{r};{g};{b}m   \033[0m"
+        print(f"{color_block} Color {i+1}: RGB{tuple(rgb)}  {hex_color}")
+
+
 pastels = generate_pastel_colors_hsl(n_colors, seed=42)
-display_color_palette(pastels)
+display_color_palette_console(pastels)
